@@ -18,6 +18,7 @@ window.addEventListener('scroll', function ( event ) {
 
 <?php
 
+
 if ($user_uuid != "") {
 	$stmt = $dbh->prepare("SELECT pos FROM progress WHERE user_uuid=:uuid AND bookid=:id LIMIT 1");
 	$stmt->bindParam(":uuid", $user_uuid);
@@ -34,14 +35,30 @@ if ($user_uuid != "") {
 
 
 $content = '';
-$fb2 = simplexml_load_string($zip->getFromName("$url->var1.fb2"));
+$data = $zip->getFromName("$url->var1.fb2");
+
+$fb2 = simplexml_load_string($data);
+echo ($fb2 ? '' : 'FB2 Parse Error'), PHP_EOL;
+
 $images = array();
 foreach ($fb2->binary as $binary) {
 	$id = $binary->attributes()['id'];
 	$images["$id"] = $binary;
 }
-foreach ($fb2->body->section as $section) {
-	$s = $section->asXML();
+
+if (isset($fb2->body->section)) {
+	foreach ($fb2->body->section as $section) {
+		$s = $section->asXML();
+		$s = str_replace("<title>", "<subtitle>", $s);
+		$s = str_replace("</title>", "</subtitle>", $s);
+		$s = str_replace('<image l:href="#', '<img src="', $s);
+		foreach (array_keys($images) as $i) {
+			$s = str_replace($i, "data:image/jpeg;base64," . $images[$i], $s);
+		}
+		$content .= $s;
+	}
+} else {
+	$s = $fb2->body->asXML();
 	$s = str_replace("<title>", "<subtitle>", $s);
 	$s = str_replace("</title>", "</subtitle>", $s);
 	$s = str_replace('<image l:href="#', '<img src="', $s);
@@ -50,6 +67,5 @@ foreach ($fb2->body->section as $section) {
 	}
 	$content .= $s;
 }
-
 echo str_replace("<p>***</p>",  '<div class="divider div-transparent div-dot"></div>', str_replace("section>>", "section>", $content));
 
