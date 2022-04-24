@@ -586,9 +586,9 @@ function opds_book($b) {
 	if ($b->year > 0) {
 		echo " <dc:issued>$b->year</dc:issued>";
 	}
-	if (intval($b->pages > 0)) {
-		echo "<dcterms:extent>$b->pages страниц</dcterms:extent>";
-	}
+//	if (intval($b->pages > 0)) {
+//		echo "<dcterms:extent>$b->pages страниц</dcterms:extent>";
+//	}
 	echo " <summary type='text'>" . strip_tags($an) . "\n $sq \n $b->keywords</summary>";
 	echo "<link rel='http://opds-spec.org/image/thumbnail' href='/extract_cover.php?sid=$b->bookid' type='image/jpeg'/>";
 	echo "<link rel='http://opds-spec.org/image' href='/extract_cover.php?id=$b->bookid' type='image/jpeg'/>";

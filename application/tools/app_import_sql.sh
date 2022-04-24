@@ -24,7 +24,8 @@ gzip -f -d /application/sql/*.gz
 /application/tools/app_topg lib.libtranslator.sql
 /application/tools/app_topg lib.reviews.sql
 
-#PGPASSWORD=flibusta psql -h postgres  -d flibusta -U flibusta -f update_vector.sql_
+echo "Обновление полнотекстовых индексов">>/application/sql/status
+PGPASSWORD=flibusta psql -h postgres  -d flibusta -U flibusta -f /application/tools/update_vectors.sql
 
 echo "Создание индекса zip-файлов">>/application/sql/status
 php /application/tools/app_update_zip_list.php

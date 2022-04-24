@@ -20,7 +20,7 @@ if (isset($_GET['q'])) {
 		unset($_SESSION['search']);
 	} else {
 		$get = mb_strtolower($_GET['q']);
-		$search = '%' . $get . '%';
+		$search = str_replace(' ', '&', $get);
 		$_SESSION['search'] = $search;
 	}
 }
@@ -122,7 +122,9 @@ if (isset($_SESSION['filter_series'])) {
 }
 
 if (isset($_SESSION['search'])) {
-	$filter .= 'AND lower(title) LIKE :search ';
+	$filter .= "AND vector @@ to_tsquery('russian', :search) ";
+	$join .= 'LEFT JOIN libbook_ts USING(bookid) ';
+
 	$fcontent .= "<div class='badge bg-success p-1 text-white'>";
 	$fcontent .= "<a class='text-white' href='/?q'>" . $_SESSION['search'] . " <i class='fas fa-times-circle'></i></a></div> ";
 }
@@ -150,7 +152,7 @@ echo $fcontent;
 echo "</div>";
 
 
-$sql = "SELECT b.*, $cols
+$sql = "SELECT *, $cols
         (SELECT Body FROM libbannotations WHERE BookId=b.BookId LIMIT 1) Body
 		FROM libbook b
 		$join
