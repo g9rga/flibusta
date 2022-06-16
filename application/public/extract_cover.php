@@ -87,14 +87,32 @@ if (isset($f->file)) {
 	$zip->close();
 }
 
-$stmt = $dbh->prepare("SELECT * FROM book_zip WHERE $id BETWEEN start_id AND end_id AND usr=0");
+
+$stmt = $dbh->prepare("SELECT filetype FROM libbook WHERE bookid=$id LIMIT 1");
+$stmt->execute();
+$type = trim($stmt->fetch()->filetype);
+if ($type == 'fb2') {
+	$u = '0';
+} else {
+	$u = '1';
+}
+
+$stmt = $dbh->prepare("SELECT * FROM book_zip WHERE $id BETWEEN start_id AND end_id AND usr=$u");
 $stmt->execute();
 $zip_name = $stmt->fetch()->filename;
 $zip = new ZipArchive(); 
 
+$filename = $dbh->query("SELECT filename FROM libfilename where BookId=$id")->fetch()->filename;
+if ($filename == '') {
+	$filename = trim("$id.$type");
+}
 
 if ($zip->open(ROOT_PATH . "flibusta/" . $zip_name)) {
-	$f = $zip->getFromName("$id.fb2");
+	$f = $zip->getFromName("$filename");
+}
+
+
+if ($type == 'fb2') {
 	$fb2 = simplexml_load_string($f);
 	$images = array();
 	if (isset($fb2->binary)) {
@@ -111,6 +129,19 @@ if ($zip->open(ROOT_PATH . "flibusta/" . $zip_name)) {
 		}
 	}
 	$zip->close();
+}
+
+if ($type == 'epub') {
+	file_put_contents(ROOT_PATH . "cache/tmp/$iid.tmp", $f);
+	include('/application/epub.php');
+	$d = new EPub(ROOT_PATH . "cache/tmp/$iid.tmp");
+	$im = $d->Cover();
+	if ($im['found'] != '') {
+		$cover = $im['data'];
+		unlink(ROOT_PATH . "cache/tmp/$iid.tmp");
+	} else {
+		echo file_get_contents('none.jpg');
+	}
 }
 
 if (strlen($cover) < 100) {

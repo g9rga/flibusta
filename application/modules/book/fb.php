@@ -51,7 +51,7 @@ if (isset($fb2->body->section)) {
 		$s = $section->asXML();
 		$s = str_replace("<title>", "<subtitle>", $s);
 		$s = str_replace("</title>", "</subtitle>", $s);
-		$s = str_replace('<image l:href="#', '<img src="', $s);
+		$s = str_replace('<image l:href="#', '<img style="width:100%;" src="', $s);
 		foreach (array_keys($images) as $i) {
 			$s = str_replace($i, "data:image/jpeg;base64," . $images[$i], $s);
 		}
@@ -61,7 +61,7 @@ if (isset($fb2->body->section)) {
 	$s = $fb2->body->asXML();
 	$s = str_replace("<title>", "<subtitle>", $s);
 	$s = str_replace("</title>", "</subtitle>", $s);
-	$s = str_replace('<image l:href="#', '<img src="', $s);
+	$s = str_replace('<image l:href="#', '<img style="width:100%;" src="', $s);
 	foreach (array_keys($images) as $i) {
 		$s = str_replace($i, "data:image/jpeg;base64," . $images[$i], $s);
 	}
