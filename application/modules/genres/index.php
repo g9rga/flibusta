@@ -28,7 +28,7 @@ while ($bg = $stmt->fetch()) {
 
 	echo "<div class='card-header'><h3>$bg->genremeta</h3></div>";
 
-	echo "<div class='card-body'><table class='table'><tbody>";
+	echo "<div class='card-body'>";
 
 	$st2 = $dbh->prepare("SELECT libgenrelist.genreid, libgenrelist.genremeta, libgenrelist.genredesc,
 		(SELECT COUNT(*) FROM libgenre WHERE libgenre.GenreId=libgenrelist.GenreId) cnt
@@ -38,13 +38,13 @@ while ($bg = $stmt->fetch()) {
 	$st2->bindParam(":meta", $bg->genremeta);
 	$st2->execute();
 	while ($g = $st2->fetch()) {	
-		echo "<tr>";
-		echo "<td><a href='/?gid=$g->genreid/'>$g->genredesc</a></td>";
-	        echo "<td>$g->cnt</td>";
-		echo "</tr>";
+		echo "<div class='mb-1'>";
+		echo "<a class='btn btn-outline-primary btn-sm' href='/?gid=$g->genreid/'>$g->genredesc</a> ";
+		echo "<a class='btn btn-outline-danger btn-sm' href='/?xgid=$g->genreid'>Исключить</a>";
+	        echo "<span class='float-sm-end'>$g->cnt</span></div>";
 	}
 	
-	echo "</tbody></table></div>";
+	echo "</div>";
 	echo "</div>";
 	echo "</div>";
 

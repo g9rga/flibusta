@@ -1,6 +1,4 @@
 <?php
-$do_cnt = false;
-
 if (isset($_GET['fb2'])) {
 	if ($_GET['fb2'] == '') {
 		unset($_SESSION['fb2']);
@@ -50,6 +48,20 @@ if (isset($_GET['sid'])) {
 	}
 }
 
+
+
+if (isset($_GET['xgid'])) {
+	if ($_GET['xgid'] == '') {
+		unset($_SESSION['filter_xgenre']);
+	} else {
+		if ($_SESSION['filter_genre'] == intval($_GET['xgid'])) {
+			unset($_SESSION['filter_genre']);
+		}
+		$_SESSION['filter_xgenre'] = intval($_GET['xgid']);
+	}
+}
+
+
 $filter = '';
 $fcontent = '';
 $join = '';
@@ -91,7 +103,7 @@ if (isset($_SESSION['filter_author'])) {
 }
 
 if (isset($_SESSION['filter_genre'])) {
-	$filter .= 'AND genreid=:gid ';
+	$filter .= 'AND g.genreid=:gid ';
 	$join .= 'LEFT JOIN libgenre g USING(BookId) ';
 	$stmt = $dbh->prepare("SELECT * FROM libgenrelist
 		WHERE genreid=:id");
@@ -100,8 +112,21 @@ if (isset($_SESSION['filter_genre'])) {
 	$g = $stmt->fetch();
 
 	$fcontent .= "<div class='badge bg-success p-1 text-white'>";
-	$fcontent .= "<a class='text-white' href='/?gid'>$g->genremeta: $g->genredesc <i class='fas fa-times-circle'></i></a></div> ";
+	$fcontent .= "<a class='text-white' href='/?xgid=$g->genreid'>$g->genremeta: $g->genredesc <i class='fas fa-times-circle'></i></a></div> ";
 }
+
+if (isset($_SESSION['filter_xgenre'])) {
+	$filter .= 'AND (SELECT COUNT(*) FROM libgenre xg WHERE xg.BookId=B.BookId AND xg.genreid=:xgid) = 0';
+	$stmt = $dbh->prepare("SELECT * FROM libgenrelist
+		WHERE genreid=:id");
+	$stmt->bindParam(":id", $_SESSION['filter_xgenre']);
+	$stmt->execute();
+	$xg = $stmt->fetch();
+
+	$fcontent .= "<div class='badge bg-secondary p-1 text-white'>";
+	$fcontent .= "<a style='text-decoration: line-through;' class='text-white' href='/?xgid'>$xg->genremeta: $xg->genredesc <i class='fas fa-times-circle'></i></a></div> ";
+}
+
 
 if (isset($_SESSION['filter_series'])) {
 	$do_cnt = true;
@@ -159,6 +184,9 @@ $sql = "SELECT *, $cols
 		WHERE deleted='0'
 		$filter
 		ORDER BY $order LIMIT " . RECORDS_PAGE . " OFFSET $start";
+
+//echo "$sql";
+
 $stmt = $dbh->prepare($sql);
 
 if (isset($_SESSION['filter_author'])) {
@@ -166,6 +194,9 @@ if (isset($_SESSION['filter_author'])) {
 }
 if (isset($_SESSION['filter_genre'])) {
 	$stmt->bindParam(":gid", $_SESSION['filter_genre']);
+}
+if (isset($_SESSION['filter_xgenre'])) {
+	$stmt->bindParam(":xgid", $_SESSION['filter_xgenre']);
 }
 if (isset($_SESSION['filter_series'])) {
 	$stmt->bindParam(":sid", $_SESSION['filter_series']);
@@ -187,7 +218,7 @@ try {
 	echo "</div></div>";
 }
 
-if ($do_cnt) {
+if (COUNT_BOOKS) {
 	$sql = "SELECT COUNT(*) cnt
 		FROM libbook b
 		$join
@@ -201,6 +232,9 @@ if ($do_cnt) {
 	if (isset($_SESSION['filter_genre'])) {
 		$stt->bindParam(":gid", $_SESSION['filter_genre']);
 	}
+	if (isset($_SESSION['filter_xgenre'])) {
+		$stt->bindParam(":xgid", $_SESSION['filter_xgenre']);
+	}
 	if (isset($_SESSION['filter_series'])) {
 		$stt->bindParam(":sid", $_SESSION['filter_series']);
 	}
@@ -210,9 +244,9 @@ if ($do_cnt) {
 
 	$stt->execute();
 	$cnt = $stt->fetch()->cnt;
-	echo "Найдено: $cnt ";
+	echo "<span class='badge bg-primary mb-1'>Найдено: $cnt</span> ";
 } else {
-	$cnt = 1000;
+	$cnt = 2000;
 }
 
 $rcnt = $stmt->rowCount();
