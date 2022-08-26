@@ -6,7 +6,7 @@
 <div class='card-body'>
 <?php
 
-$status_import = (trim(shell_exec('ps aux|grep app_import_sql|grep -v grep')) !== '');
+$status_import = (trim(shell_exec('ps aux|grep app_|grep -v grep')) !== '');
 
 function get_ds($path){
 	$io = popen ( '/usr/bin/du -sk ' . $path, 'r' );
@@ -17,19 +17,17 @@ function get_ds($path){
 }
 
 if (!$status_import) {
-
-$cache_size = get_ds("/application/cache/covers") + get_ds("/application/cache/authors");
-$books_size = round(get_ds("/application/flibusta") / 1024, 1);
-$qtotal = $dbh->query("SELECT (SELECT MAX(time) FROM libbook) mmod, (SELECT COUNT(*) FROM libbook) bcnt, (SELECT COUNT(*) FROM libbook WHERE deleted='0') bdcnt");
-$qtotal->execute();
-$total = $qtotal->fetch();
-echo "<table class='table'><tbody>";
-echo "<tr><td>Актуальность базы:</td><td>$total->mmod</td></tr>";
-echo "<tr><td>Всего произведений:</td><td>$total->bcnt</td></tr>";
-echo "<tr><td>Размер архива:</td><td>$books_size Gb</td></tr>";
-echo "<tr><td>Размер кэша:</td><td>$cache_size Mb</td></tr>";
-echo "</tbody></table>";
-
+	$cache_size = get_ds("/application/cache/covers") + get_ds("/application/cache/authors");
+	$books_size = round(get_ds("/application/flibusta") / 1024, 1);
+	$qtotal = $dbh->query("SELECT (SELECT MAX(time) FROM libbook) mmod, (SELECT COUNT(*) FROM libbook) bcnt, (SELECT COUNT(*) FROM libbook WHERE deleted='0') bdcnt");
+	$qtotal->execute();
+	$total = $qtotal->fetch();
+	echo "<table class='table'><tbody>";
+	echo "<tr><td>Актуальность базы:</td><td>$total->mmod</td></tr>";
+	echo "<tr><td>Всего произведений:</td><td>$total->bcnt</td></tr>";
+	echo "<tr><td>Размер архива:</td><td>$books_size Gb</td></tr>";
+	echo "<tr><td>Размер кэша:</td><td>$cache_size Mb</td></tr>";
+	echo "</tbody></table>";
 } else {
 	echo "Идёт процесс импорта...";
 }
@@ -57,6 +55,11 @@ if (!$status_import) {
 		$status_fetch = true;
 		header("location:/service/");
 	}
+	if (isset($_GET['reindex'])) {
+		shell_exec('stdbuf -o0 /application/tools/app_reindex.sh 2>/dev/null >/dev/null &');
+		$status_fetch = true;
+		header("location:/service/");
+	}
 }
 
 if ($status_import) {
@@ -67,6 +70,7 @@ if ($status_import) {
 echo "<div class='d-flex justify-content-between'>";
 echo "<a class='btn btn-primary m-1 $status' href='?import=sql'>Обновить базу</a> ";
 echo "<a class='btn btn-warning m-1' href='?empty=cache'>Очистить кэш</a> ";
+echo "<a class='btn btn-warning m-1' href='?reindex'>Сканирование ZIP</a> ";
 echo "</div>";
 
 if ($status_import) {
